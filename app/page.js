@@ -13,6 +13,7 @@ export default function App() {
   const [uploadedVideo, setUploadedVideo] = useState(null)
   const [videoUrl, setVideoUrl] = useState('')
   const videoRef = useRef(null)
+  const overlayRef = useRef(null)
 
   // Playback State
   const [isPlaying, setIsPlaying] = useState(false)
@@ -29,7 +30,7 @@ export default function App() {
     setIsExportDialogOpen,
     handleExportClick,
     handleExportConfirm
-  } = useExport(videoUrl, exportFileName)
+  } = useExport(videoUrl, exportFileName, videoRef, overlayRef, setCurrentTime)
 
   // Derived State
   const activeComponents = timeline.timelineComponents.filter(
@@ -101,6 +102,7 @@ export default function App() {
       uploadedVideo={uploadedVideo}
       videoUrl={videoUrl}
       videoRef={videoRef}
+      overlayRef={overlayRef}
       handleVideoUpload={handleVideoUpload}
 
       // Playback

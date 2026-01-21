@@ -51,7 +51,9 @@ export function EditorLayout({
     handleExportConfirm,
 
     // Derived
-    activeComponents
+    // Derived
+    activeComponents,
+    overlayRef
 }) {
     return (
         <div className="h-screen w-full bg-background flex flex-col overflow-hidden">
@@ -85,6 +87,7 @@ export function EditorLayout({
                         handleVideoUpload={handleVideoUpload}
                         activeComponents={activeComponents}
                         currentTime={currentTime}
+                        overlayRef={overlayRef}
                     />
 
                     {videoUrl && (

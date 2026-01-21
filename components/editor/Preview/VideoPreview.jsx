@@ -10,7 +10,8 @@ export function VideoPreview({
     videoRef,
     handleVideoUpload,
     activeComponents,
-    currentTime
+    currentTime,
+    overlayRef
 }) {
     const fileInputRef = useRef(null)
 
@@ -51,15 +52,17 @@ export function VideoPreview({
                     />
 
                     {/* Overlay Components */}
-                    <AnimatePresence>
-                        {activeComponents.map((component) => (
-                            <ComponentOverlay
-                                key={component.id}
-                                component={component}
-                                currentTime={currentTime}
-                            />
-                        ))}
-                    </AnimatePresence>
+                    <div ref={overlayRef} className="absolute inset-0 z-10 pointer-events-none">
+                        <AnimatePresence>
+                            {activeComponents.map((component) => (
+                                <ComponentOverlay
+                                    key={component.id}
+                                    component={component}
+                                    currentTime={currentTime}
+                                />
+                            ))}
+                        </AnimatePresence>
+                    </div>
                 </div>
             )}
         </div>
