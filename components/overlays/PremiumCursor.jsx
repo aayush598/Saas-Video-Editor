@@ -85,23 +85,102 @@ export function PremiumCursor({ component, currentTime }) {
     }
     const easedProgress = ease(progress)
 
-    // Position Interpolation
-    const currentX = startPos.x + (endPos.x - startPos.x) * easedProgress
-    const currentY = startPos.y + (endPos.y - startPos.y) * easedProgress
+    // --- Path Logic ---
+    const getPathData = () => {
+        const dx = endPos.x - startPos.x
+        const dy = endPos.y - startPos.y
 
-    // Path Logic (SVG curve)
-    // A simple quadratic bezier curve for 'curved', or straight line for 'linear'
-    const controlPointX = pathType === 'curved' ? startPos.x + (endPos.x - startPos.x) / 2 : (startPos.x + endPos.x) / 2
-    const controlPointY = pathType === 'curved' ? startPos.y : (startPos.y + endPos.y) / 2 - 20 // add some arc?
+        if (pathType === 'linear') {
+            return `M ${startPos.x} ${startPos.y} L ${endPos.x} ${endPos.y}`
+        }
 
-    const pathD = pathType === 'curved'
-        ? `M ${startPos.x} ${startPos.y} Q ${startPos.x} ${endPos.y}, ${endPos.x} ${endPos.y}` // Simple curve
-        : `M ${startPos.x} ${startPos.y} L ${endPos.x} ${endPos.y}`
+        if (pathType === 'natural-arc') {
+            // A subtle, natural looking arc (hand movement usually arcs slightly)
+            // Control point: perpendicular to midpoint
+            const midX = (startPos.x + endPos.x) / 2
+            const midY = (startPos.y + endPos.y) / 2
+            // Offset control point to create arc. Direction depends on movement.
+            // Simple heuristic: arc upwards if moving roughly horizontal, sidewards if vertical
+            const isHorizontal = Math.abs(dx) > Math.abs(dy)
+            const controlX = midX + (isHorizontal ? 0 : dx * 0.2)
+            const controlY = midY - (isHorizontal ? Math.abs(dx) * 0.2 : 0)
+
+            return `M ${startPos.x} ${startPos.y} Q ${controlX} ${controlY} ${endPos.x} ${endPos.y}`
+        }
+
+        if (pathType === 's-curve') {
+            // Beautiful S-curve for long diagonal movements
+            const c1x = startPos.x + dx * 0.5
+            const c1y = startPos.y
+            const c2x = startPos.x + dx * 0.5
+            const c2y = endPos.y
+            return `M ${startPos.x} ${startPos.y} C ${c1x} ${c1y} ${c2x} ${c2y} ${endPos.x} ${endPos.y}`
+        }
+
+        // Default 'curved' (legacy support)
+        return `M ${startPos.x} ${startPos.y} Q ${startPos.x} ${endPos.y} ${endPos.x} ${endPos.y}`
+    }
+
+    const pathD = getPathData()
+
+    // Position Calculation based on Path
+    // For true path following, we calculate the point on the specific curve type at 'easedProgress'
+    const getPositionOnPath = (t) => {
+        const p0 = startPos
+        const p3 = endPos
+
+        if (pathType === 'linear') {
+            return {
+                x: p0.x + (p3.x - p0.x) * t,
+                y: p0.y + (p3.y - p0.y) * t
+            }
+        }
+
+        if (pathType === 'natural-arc' || pathType === 'curved') {
+            // Quadratic Bezier interpolation
+            // B(t) = (1-t)^2 * P0 + 2(1-t)t * P1 + t^2 * P2
+            const dx = endPos.x - startPos.x
+            const dy = endPos.y - startPos.y
+            let p1 = { x: startPos.x, y: endPos.y } // Default curved control point
+
+            if (pathType === 'natural-arc') {
+                const midX = (startPos.x + endPos.x) / 2
+                const midY = (startPos.y + endPos.y) / 2
+                const isHorizontal = Math.abs(dx) > Math.abs(dy)
+                p1 = {
+                    x: midX + (isHorizontal ? 0 : dx * 0.2),
+                    y: midY - (isHorizontal ? Math.abs(dx) * 0.2 : 0)
+                }
+            }
+
+            return {
+                x: Math.pow(1 - t, 2) * p0.x + 2 * (1 - t) * t * p1.x + Math.pow(t, 2) * p3.x,
+                y: Math.pow(1 - t, 2) * p0.y + 2 * (1 - t) * t * p1.y + Math.pow(t, 2) * p3.y
+            }
+        }
+
+        if (pathType === 's-curve') {
+            // Cubic Bezier interpolation
+            // B(t) = (1-t)^3*P0 + 3(1-t)^2*t*P1 + 3(1-t)t^2*P2 + t^3*P3
+            const dx = endPos.x - startPos.x
+            const p1 = { x: startPos.x + dx * 0.5, y: startPos.y }
+            const p2 = { x: startPos.x + dx * 0.5, y: endPos.y }
+
+            return {
+                x: Math.pow(1 - t, 3) * p0.x + 3 * Math.pow(1 - t, 2) * t * p1.x + 3 * (1 - t) * Math.pow(t, 2) * p2.x + Math.pow(t, 3) * p3.x,
+                y: Math.pow(1 - t, 3) * p0.y + 3 * Math.pow(1 - t, 2) * t * p1.y + 3 * (1 - t) * Math.pow(t, 2) * p2.y + Math.pow(t, 3) * p3.y
+            }
+        }
+
+        return { x: 0, y: 0 }
+    }
+
+    const { x: currentX, y: currentY } = getPositionOnPath(easedProgress)
 
     return (
         <div className="absolute inset-0 pointer-events-none overflow-hidden select-none">
 
-            {/* 1. Zoom Spotlight Effect (Optional) */}
+            {/* 1. Zoom Spotlight Effect */}
             {zoomOnAction && progress > 0.8 && (
                 <motion.div
                     initial={{ opacity: 0 }}
@@ -115,51 +194,17 @@ export function PremiumCursor({ component, currentTime }) {
 
             {/* 2. Cursor Path */}
             {showPath && (
-                <svg className="absolute inset-0 w-full h-full z-0 overflow-visible">
+                <svg className="absolute inset-0 w-full h-full z-0" viewBox="0 0 100 100" preserveAspectRatio="none">
+                    {/* Path Trail */}
                     <motion.path
                         d={pathD}
                         fill="none"
                         stroke={pathColor}
-                        strokeWidth="2"
-                        strokeDasharray="4 4"
-                        strokeLinecap="round"
-                        initial={{ pathLength: 0, opacity: 0 }}
-                        animate={{ pathLength: progress, opacity: 0.6 }}
-                        // Keep visible based on progress
-                        style={{ vectorEffect: 'non-scaling-stroke' }}
-                    // Note: percentage coordinates in SVG are tricky, simpler to assume this SVG scales
-                    // But for accurate % rendering in SVG, we normally use 0-100 coordinates with viewBox="0 0 100 100" preserveAspectRatio="none"
-                    />
-                    {/* Re-rendering path with correct viewBox for percentage coordinates */}
-                    <path
-                        d={pathType === 'curved'
-                            ? `M ${startPos.x} ${startPos.y} Q ${startPos.x} ${endPos.y} ${endPos.x} ${endPos.y}`
-                            : `M ${startPos.x} ${startPos.y} L ${endPos.x} ${endPos.y}`
-                        }
-                        fill="none"
-                        stroke={pathColor}
-                        strokeWidth="0.2" // thinner stroke relative to 100x100 viewbox
-                        strokeDasharray="1 1"
-                        strokeOpacity={0.4}
-                        transform="scale(1, 1)"
-                    />
-                </svg>
-            )}
-
-            {/* Path SVG Fixed for Percentages */}
-            {showPath && (
-                <svg className="absolute inset-0 w-full h-full z-0" viewBox="0 0 100 100" preserveAspectRatio="none">
-                    <motion.path
-                        d={pathType === 'curved'
-                            ? `M ${startPos.x} ${startPos.y} Q ${Math.min(startPos.x, endPos.x) + Math.abs(endPos.x - startPos.x) * 0.2} ${Math.max(startPos.y, endPos.y)} ${endPos.x} ${endPos.y}`
-                            : `M ${startPos.x} ${startPos.y} L ${endPos.x} ${endPos.y}`
-                        }
-                        fill="none"
-                        stroke={pathColor}
                         strokeWidth="0.3"
                         strokeDasharray="1 1"
-                        strokeOpacity={0.6 * progress} // Fade in trail
+                        strokeOpacity={0.6 * progress}
                     />
+                    {/* Preview ghost path usually visible in editing tools, maybe optional */}
                 </svg>
             )}
 

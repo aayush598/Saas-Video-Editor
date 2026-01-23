@@ -241,7 +241,9 @@ function PropertiesEditor({ component, onUpdate }) {
                                 value={props.pathType}
                                 onChange={(e) => onUpdate({ pathType: e.target.value })}
                             >
-                                <option value="curved">Curved (Bezier)</option>
+                                <option value="natural-arc">Natural Arc (Premium)</option>
+                                <option value="s-curve">S-Curve (Cinematic)</option>
+                                <option value="curved">Simple Curve</option>
                                 <option value="linear">Straight Line</option>
                             </select>
                             <div className="flex items-center gap-2">
