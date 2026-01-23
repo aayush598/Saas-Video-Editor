@@ -4,6 +4,7 @@ import { CalloutBubble } from '@/components/overlays/CalloutBubble'
 import { TerminalOverlay } from '@/components/overlays/TerminalOverlay'
 import { DeviceMockup } from '@/components/overlays/DeviceMockup'
 import { TextHighlight } from '@/components/overlays/TextHighlight'
+import { PremiumCursor } from '@/components/overlays/PremiumCursor'
 
 export function ComponentOverlay({ component, currentTime }) {
     const progress = (currentTime - component.startTime) / (component.endTime - component.startTime)
@@ -30,6 +31,10 @@ export function ComponentOverlay({ component, currentTime }) {
 
     if (component.type === 'text-highlight') {
         return <TextHighlight component={component} />
+    }
+
+    if (component.type === 'premium-cursor') {
+        return <PremiumCursor component={component} currentTime={currentTime} />
     }
 
     return null
