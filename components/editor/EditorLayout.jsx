@@ -88,6 +88,7 @@ export function EditorLayout({
                         activeComponents={activeComponents}
                         currentTime={currentTime}
                         overlayRef={overlayRef}
+                        videoClips={videoClips}
                     />
 
                     {videoUrl && (

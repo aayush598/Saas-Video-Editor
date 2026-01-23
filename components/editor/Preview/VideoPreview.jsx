@@ -11,9 +11,15 @@ export function VideoPreview({
     handleVideoUpload,
     activeComponents,
     currentTime,
-    overlayRef
+    overlayRef,
+    videoClips = []
 }) {
     const fileInputRef = useRef(null)
+
+    // Check if current time is within any active video clip
+    const isVideoVisible = videoClips.some(clip =>
+        currentTime >= clip.start && currentTime < clip.end
+    )
 
     return (
         <div className="flex-1 bg-muted/30 flex items-center justify-center p-4 min-h-0">
@@ -47,7 +53,11 @@ export function VideoPreview({
                     <video
                         ref={videoRef}
                         src={videoUrl}
-                        className="w-full h-full object-contain transition-opacity duration-300"
+                        className="w-full h-full object-contain transition-opacity duration-150"
+                        style={{
+                            opacity: isVideoVisible ? 1 : 0,
+                            visibility: isVideoVisible ? 'visible' : 'hidden'
+                        }}
                         muted={false}
                     />
 
