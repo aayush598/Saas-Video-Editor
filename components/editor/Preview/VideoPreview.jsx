@@ -16,7 +16,7 @@ export function VideoPreview({
     const fileInputRef = useRef(null)
 
     return (
-        <div className="flex-1 bg-muted/30 flex items-center justify-center p-8">
+        <div className="flex-1 bg-muted/30 flex items-center justify-center p-4 min-h-0">
             {!videoUrl ? (
                 <Card className="p-12 text-center max-w-md">
                     <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -43,7 +43,7 @@ export function VideoPreview({
                     </Button>
                 </Card>
             ) : (
-                <div className="relative w-full max-w-5xl aspect-video bg-black rounded-lg overflow-hidden shadow-2xl">
+                <div className="relative w-auto h-auto max-w-full max-h-full aspect-video bg-black rounded-lg overflow-hidden shadow-2xl">
                     <video
                         ref={videoRef}
                         src={videoUrl}

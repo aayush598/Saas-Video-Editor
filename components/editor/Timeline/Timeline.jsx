@@ -24,15 +24,6 @@ export function Timeline({
 }) {
     const timelineRef = useRef(null)
 
-    const handleTimelineClick = (e) => {
-        if (!timelineRef.current) return
-        const rect = timelineRef.current.getBoundingClientRect()
-        const x = e.clientX - rect.left
-        const percent = x / rect.width
-        const newTime = Math.max(0, Math.min(percent * projectDuration / zoom, projectDuration))
-        setCurrentTime(newTime)
-    }
-
     return (
         <div className="border-t bg-card">
             <div className="p-4">
@@ -61,59 +52,76 @@ export function Timeline({
                 {/* Timeline Track */}
                 <div
                     ref={timelineRef}
-                    className="relative h-32 bg-muted/50 rounded-lg border overflow-x-auto cursor-crosshair"
-                    onClick={handleTimelineClick}
+                    className="relative h-48 bg-muted/50 rounded-lg border overflow-x-auto cursor-crosshair"
+                    onClick={(e) => {
+                        if (!timelineRef.current) return
+                        const rect = timelineRef.current.getBoundingClientRect()
+                        const x = e.clientX - rect.left + timelineRef.current.scrollLeft
+                        const totalWidth = timelineRef.current.scrollWidth
+                        const percent = x / totalWidth
+                        const newTime = Math.max(0, Math.min(percent * projectDuration, projectDuration))
+                        setCurrentTime(newTime)
+                    }}
                 >
-                    {/* Time Markers */}
-                    <div className="absolute top-0 left-0 right-0 h-6 flex items-center border-b px-2 bg-muted/80">
-                        {Array.from({ length: Math.ceil((projectDuration / zoom)) + 1 }).map((_, i) => (
-                            <div key={i} className="flex-1 text-xs text-muted-foreground text-center min-w-[40px]">
-                                {i}s
+                    <div
+                        className="relative h-full"
+                        style={{ width: `${Math.max(100, zoom * 100)}%` }}
+                    >
+                        {/* Time Markers */}
+                        <div className="absolute top-0 left-0 right-0 h-6 border-b bg-muted/80">
+                            {Array.from({ length: Math.ceil(projectDuration) + 1 }).map((_, i) => (
+                                <div
+                                    key={i}
+                                    className="absolute top-0 text-xs text-muted-foreground border-l pl-1 h-full flex items-center"
+                                    style={{ left: `${(i / projectDuration) * 100}%` }}
+                                >
+                                    {i}s
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Video Clips Track */}
+                        <div className="absolute top-8 left-0 right-0 h-14 p-2">
+                            <div className="relative h-full">
+                                {videoClips.map((clip) => (
+                                    <VideoClip
+                                        key={clip.id}
+                                        clip={clip}
+                                        projectDuration={projectDuration}
+                                        zoom={zoom}
+                                        onMove={handleClipMove}
+                                        onResize={handleClipResize}
+                                        onDelete={deleteClip}
+                                        isSelected={selectedClip === clip.id}
+                                        onSelect={() => setSelectedClip(clip.id)}
+                                    />
+                                ))}
                             </div>
-                        ))}
-                    </div>
-
-                    {/* Video Clips Track */}
-                    <div className="absolute top-8 left-0 right-0 h-14 p-2">
-                        <div className="relative h-full">
-                            {videoClips.map((clip) => (
-                                <VideoClip
-                                    key={clip.id}
-                                    clip={clip}
-                                    projectDuration={projectDuration}
-                                    zoom={zoom}
-                                    onMove={handleClipMove}
-                                    onResize={handleClipResize}
-                                    onDelete={deleteClip}
-                                    isSelected={selectedClip === clip.id}
-                                    onSelect={() => setSelectedClip(clip.id)}
-                                />
-                            ))}
                         </div>
-                    </div>
 
-                    {/* Overlay Components Track */}
-                    <div className="absolute top-24 left-0 right-0 h-12 p-2">
-                        <div className="relative h-full">
-                            {timelineComponents.map((component) => (
-                                <TimelineComponent
-                                    key={component.id}
-                                    component={component}
-                                    projectDuration={projectDuration}
-                                    zoom={zoom}
-                                    onSelect={() => setSelectedComponent(component)}
-                                    onRemove={() => removeComponent(component.id)}
-                                    isSelected={selectedComponent?.id === component.id}
-                                />
-                            ))}
+                        {/* Overlay Components Track */}
+                        <div className="absolute top-24 left-0 right-0 h-12 p-2">
+                            <div className="relative h-full">
+                                {timelineComponents.map((component) => (
+                                    <TimelineComponent
+                                        key={component.id}
+                                        component={component}
+                                        projectDuration={projectDuration}
+                                        zoom={zoom}
+                                        onSelect={() => setSelectedComponent(component)}
+                                        onRemove={() => removeComponent(component.id)}
+                                        isSelected={selectedComponent?.id === component.id}
+                                    />
+                                ))}
+                            </div>
                         </div>
-                    </div>
 
-                    <Playhead
-                        currentTime={currentTime}
-                        projectDuration={projectDuration}
-                        zoom={zoom}
-                    />
+                        <Playhead
+                            currentTime={currentTime}
+                            projectDuration={projectDuration}
+                            zoom={zoom}
+                        />
+                    </div>
                 </div>
             </div>
         </div>

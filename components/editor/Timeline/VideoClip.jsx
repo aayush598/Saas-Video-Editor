@@ -8,8 +8,8 @@ export function VideoClip({ clip, projectDuration, zoom, onMove, onResize, onDel
     const clipRef = useRef(null)
 
     const duration = clip.end - clip.start
-    const leftPercent = (clip.start / (projectDuration / zoom)) * 100
-    const widthPercent = (duration / (projectDuration / zoom)) * 100
+    const leftPercent = (clip.start / projectDuration) * 100
+    const widthPercent = (duration / projectDuration) * 100
 
     const handleMouseDown = (e, type) => {
         e.stopPropagation()
@@ -35,7 +35,7 @@ export function VideoClip({ clip, projectDuration, zoom, onMove, onResize, onDel
 
             const parentWidth = parent.offsetWidth
             const deltaX = e.clientX - dragStart.x
-            const deltaTime = (deltaX / parentWidth) * (projectDuration / zoom)
+            const deltaTime = (deltaX / parentWidth) * projectDuration
 
             if (isDragging) {
                 const newStart = Math.max(0, dragStart.start + deltaTime)

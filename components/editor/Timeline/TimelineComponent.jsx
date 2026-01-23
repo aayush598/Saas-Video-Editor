@@ -1,8 +1,8 @@
 import { Trash2 } from 'lucide-react'
 
 export function TimelineComponent({ component, projectDuration, zoom, onSelect, onRemove, isSelected }) {
-    const leftPercent = (component.startTime / (projectDuration / zoom)) * 100
-    const widthPercent = ((component.endTime - component.startTime) / (projectDuration / zoom)) * 100
+    const leftPercent = (component.startTime / projectDuration) * 100
+    const widthPercent = ((component.endTime - component.startTime) / projectDuration) * 100
 
     return (
         <div
