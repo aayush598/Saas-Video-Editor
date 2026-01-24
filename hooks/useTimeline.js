@@ -7,8 +7,55 @@ export function useTimeline() {
     const [videoClips, setVideoClips] = useState([])
     const [selectedComponent, setSelectedComponent] = useState(null)
     const [selectedClip, setSelectedClip] = useState(null)
+    const [clipboard, setClipboard] = useState(null)
     const [projectDuration, setProjectDuration] = useState(30)
     const [zoom, setZoom] = useState(1)
+
+    const copyItem = () => {
+        if (selectedComponent) {
+            setClipboard({ type: 'component', data: selectedComponent })
+            toast.success('Component copied')
+        } else if (selectedClip) {
+            const clip = videoClips.find(c => c.id === selectedClip)
+            if (clip) {
+                setClipboard({ type: 'clip', data: clip })
+                toast.success('Clip copied')
+            }
+        }
+    }
+
+    const pasteItem = (currentTime) => {
+        if (!clipboard) return
+
+        if (clipboard.type === 'component') {
+            const newComponent = {
+                ...clipboard.data,
+                id: `${clipboard.data.type}-${Date.now()}`,
+                startTime: currentTime,
+                endTime: Math.min(currentTime + (clipboard.data.endTime - clipboard.data.startTime), projectDuration)
+            }
+            setTimelineComponents([...timelineComponents, newComponent])
+            setSelectedComponent(newComponent)
+            toast.success('Component pasted')
+        } else if (clipboard.type === 'clip') {
+            const duration = clipboard.data.end - clipboard.data.start
+            const newClip = {
+                ...clipboard.data,
+                id: `clip-${Date.now()}`,
+                start: currentTime,
+                end: currentTime + duration,
+                name: `${clipboard.data.name} (Copy)`
+            }
+            setVideoClips([...videoClips, newClip].sort((a, b) => a.start - b.start))
+
+            // Extend project duration if needed
+            const maxEnd = Math.max(...[...videoClips, newClip].map(c => c.end))
+            setProjectDuration(maxEnd)
+
+            setSelectedClip(newClip.id)
+            toast.success('Clip pasted')
+        }
+    }
 
     const addComponentToTimeline = (componentType, currentTime) => {
         const component = COMPONENT_LIBRARY.find(c => c.id === componentType)
@@ -172,6 +219,11 @@ export function useTimeline() {
         handleSplit,
         handleClipMove,
         handleClipResize,
-        deleteClip
+        handleClipMove,
+        handleClipResize,
+        deleteClip,
+        copyItem,
+        pasteItem,
+        clipboard
     }
 }

@@ -40,6 +40,9 @@ export function EditorLayout({
     handleClipMove,
     handleClipResize,
     deleteClip,
+    copyItem,
+    pasteItem,
+    clipboard,
 
     // Export State
     isExporting,
@@ -108,6 +111,9 @@ export function EditorLayout({
                             selectedComponent={selectedComponent}
                             setSelectedComponent={setSelectedComponent}
                             removeComponent={removeComponent}
+                            copyItem={copyItem}
+                            pasteItem={pasteItem}
+                            clipboard={clipboard}
                         />
                     )}
                 </div>

@@ -119,6 +119,9 @@ export default function App() {
       handleSplit={() => timeline.handleSplit(currentTime)}
       handleClipMove={(id, newStart) => timeline.handleClipMove(id, newStart, timeline.projectDuration)}
       handleClipResize={(id, edge, newValue) => timeline.handleClipResize(id, edge, newValue, timeline.projectDuration)}
+      copyItem={timeline.copyItem}
+      pasteItem={() => timeline.pasteItem(currentTime)}
+      clipboard={timeline.clipboard}
 
       // Export
       isExporting={isExporting}

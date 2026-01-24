@@ -1,6 +1,8 @@
 import { useRef } from 'react'
 import { Label } from '@/components/ui/label'
 import { Slider } from '@/components/ui/slider'
+import { Button } from '@/components/ui/button'
+import { Copy, Clipboard, Trash2 } from 'lucide-react'
 import { VideoClip } from './VideoClip'
 import { TimelineComponent } from './TimelineComponent'
 import { Playhead } from './Playhead'
@@ -20,9 +22,27 @@ export function Timeline({
     setSelectedClip,
     selectedComponent,
     setSelectedComponent,
-    removeComponent
+    removeComponent,
+    copyItem,
+    pasteItem,
+    clipboard
 }) {
     const timelineRef = useRef(null)
+
+    const getTimelineInterval = () => {
+        const visibleDuration = projectDuration / Math.max(0.1, zoom)
+
+        if (visibleDuration <= 20) return 1
+        if (visibleDuration <= 60) return 2
+        if (visibleDuration <= 120) return 5
+        if (visibleDuration <= 300) return 10 // 5 mins
+        if (visibleDuration <= 600) return 15 // 10 mins
+        if (visibleDuration <= 1800) return 30 // 30 mins
+        if (visibleDuration <= 3600) return 60 // 1 hour
+        return 120
+    }
+
+    const interval = getTimelineInterval()
 
     return (
         <div className="border-t bg-card">
@@ -30,6 +50,39 @@ export function Timeline({
                 <div className="flex items-center justify-between mb-4">
                     <h3 className="font-semibold">Timeline</h3>
                     <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2 mr-4 border-r pr-4">
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={copyItem}
+                                disabled={!selectedClip && !selectedComponent}
+                                title="Copy"
+                            >
+                                <Copy className="w-4 h-4" />
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={pasteItem}
+                                disabled={!clipboard}
+                                title="Paste"
+                            >
+                                <Clipboard className="w-4 h-4" />
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => {
+                                    if (selectedClip) deleteClip(selectedClip)
+                                    if (selectedComponent) removeComponent(selectedComponent.id)
+                                }}
+                                disabled={!selectedClip && !selectedComponent}
+                                title="Delete"
+                                className="text-destructive hover:text-destructive"
+                            >
+                                <Trash2 className="w-4 h-4" />
+                            </Button>
+                        </div>
                         <div className="flex items-center gap-2">
                             <Label className="text-xs">Zoom:</Label>
                             <Slider
@@ -69,15 +122,18 @@ export function Timeline({
                     >
                         {/* Time Markers */}
                         <div className="absolute top-0 left-0 right-0 h-6 border-b bg-muted/80">
-                            {Array.from({ length: Math.ceil(projectDuration) + 1 }).map((_, i) => (
-                                <div
-                                    key={i}
-                                    className="absolute top-0 text-xs text-muted-foreground border-l pl-1 h-full flex items-center"
-                                    style={{ left: `${(i / projectDuration) * 100}%` }}
-                                >
-                                    {i}s
-                                </div>
-                            ))}
+                            {Array.from({ length: Math.ceil(projectDuration / interval) + 1 }).map((_, idx) => {
+                                const i = idx * interval
+                                return (
+                                    <div
+                                        key={i}
+                                        className="absolute top-0 text-xs text-muted-foreground border-l pl-1 h-full flex items-center"
+                                        style={{ left: `${(i / projectDuration) * 100}%` }}
+                                    >
+                                        {i}s
+                                    </div>
+                                )
+                            })}
                         </div>
 
                         {/* Video Clips Track */}
