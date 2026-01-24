@@ -5,11 +5,25 @@ import { COMPONENT_LIBRARY } from '@/lib/constants/componentLibrary'
 export function useTimeline() {
     const [timelineComponents, setTimelineComponents] = useState([])
     const [videoClips, setVideoClips] = useState([])
-    const [selectedComponent, setSelectedComponent] = useState(null)
+    const [selectedComponentId, setSelectedComponentId] = useState(null)
     const [selectedClip, setSelectedClip] = useState(null)
     const [clipboard, setClipboard] = useState(null)
     const [projectDuration, setProjectDuration] = useState(30)
     const [zoom, setZoom] = useState(1)
+
+    // Derived selected component to ensure it's always fresh
+    const selectedComponent = timelineComponents.find(c => c.id === selectedComponentId) || null
+
+    // Helper to maintain interface
+    const setSelectedComponent = (input) => {
+        if (!input) {
+            setSelectedComponentId(null)
+            return
+        }
+        // Support both ID string and Component object
+        const id = typeof input === 'string' ? input : input.id
+        setSelectedComponentId(id)
+    }
 
     const copyItem = () => {
         if (selectedComponent) {
@@ -35,7 +49,7 @@ export function useTimeline() {
                 endTime: Math.min(currentTime + (clipboard.data.endTime - clipboard.data.startTime), projectDuration)
             }
             setTimelineComponents([...timelineComponents, newComponent])
-            setSelectedComponent(newComponent)
+            setSelectedComponentId(newComponent.id)
             toast.success('Component pasted')
         } else if (clipboard.type === 'clip') {
             const duration = clipboard.data.end - clipboard.data.start
@@ -57,25 +71,90 @@ export function useTimeline() {
         }
     }
 
-    const addComponentToTimeline = (componentType, currentTime) => {
+    const addComponentToTimeline = (componentType, currentTime, propsOverride = {}) => {
         const component = COMPONENT_LIBRARY.find(c => c.id === componentType)
+        const defaultDuration = component.defaultProps.duration || 3
+
+        let startTime = currentTime
+
+        // If it's a freeze frame, we need to split the video and make a gap
+        if (componentType === 'freeze-frame') {
+            const clipAtPlayhead = videoClips.find(c => currentTime > c.start && currentTime < c.end)
+            if (clipAtPlayhead) {
+                const splitPoint = currentTime
+                const relativeSplit = splitPoint - clipAtPlayhead.start
+                const sourceSplit = clipAtPlayhead.sourceStart + relativeSplit
+
+                const clipLeft = {
+                    ...clipAtPlayhead,
+                    id: `clip-${Date.now()}-1`,
+                    end: splitPoint,
+                    sourceEnd: sourceSplit,
+                    name: clipAtPlayhead.name
+                }
+
+                const clipRight = {
+                    ...clipAtPlayhead,
+                    id: `clip-${Date.now()}-2`,
+                    start: splitPoint + defaultDuration,
+                    end: clipAtPlayhead.end + defaultDuration,
+                    sourceStart: sourceSplit,
+                    name: clipAtPlayhead.name
+                }
+
+                const otherClipsShifted = videoClips
+                    .filter(c => c.id !== clipAtPlayhead.id)
+                    .map(c => {
+                        if (c.start >= splitPoint) {
+                            return {
+                                ...c,
+                                start: c.start + defaultDuration,
+                                end: c.end + defaultDuration
+                            }
+                        }
+                        return c
+                    })
+
+                setVideoClips([clipLeft, clipRight, ...otherClipsShifted].sort((a, b) => a.start - b.start))
+
+                // Shift existing components that are after the split point
+                setTimelineComponents(prev => prev.map(c => {
+                    if (c.startTime >= splitPoint) {
+                        return {
+                            ...c,
+                            startTime: c.startTime + defaultDuration,
+                            endTime: c.endTime + defaultDuration
+                        }
+                    }
+                    return c
+                }))
+
+                // Update Project Duration
+                const maxEnd = Math.max(...[clipLeft, clipRight, ...otherClipsShifted].map(c => c.end))
+                setProjectDuration(maxEnd)
+            }
+        }
+
         const newComponent = {
             id: `${componentType}-${Date.now()}`,
             type: componentType,
             name: component.name,
-            startTime: currentTime,
-            endTime: Math.min(currentTime + 3, projectDuration),
-            props: { ...component.defaultProps }
+            startTime: startTime,
+            endTime: startTime + defaultDuration,
+            props: { ...component.defaultProps, ...propsOverride }
         }
-        setTimelineComponents([...timelineComponents, newComponent])
-        setSelectedComponent(newComponent)
+        setTimelineComponents(prev => [...prev, newComponent])
+        setSelectedComponentId(newComponent.id)
         toast.success(`${component.name} added to timeline`)
     }
 
     const removeComponent = (id) => {
+        // If removing a freeze frame, we should probably close the gap?
+        // For now, simpler to just remove the overlay, but gaps remain.
+        // Advanced users can move clips to close gaps.
         setTimelineComponents(timelineComponents.filter(c => c.id !== id))
-        if (selectedComponent?.id === id) {
-            setSelectedComponent(null)
+        if (selectedComponentId === id) {
+            setSelectedComponentId(null)
         }
         toast.info('Component removed')
     }
@@ -87,6 +166,58 @@ export function useTimeline() {
     }
 
     const updateComponentTiming = (id, startTime, endTime) => {
+        const component = timelineComponents.find(c => c.id === id)
+
+        if (component?.type === 'freeze-frame') {
+            // Calculate the delta in duration change
+            const currentDuration = component.endTime - component.startTime
+            const newDuration = endTime - startTime
+            const delta = newDuration - currentDuration
+
+            // If duration changed, we need to push/pull everything after this component
+            if (Math.abs(delta) > 0.01) {
+                const pivotPoint = component.endTime
+
+                // Shift Video Clips
+                setVideoClips(prev => prev.map(c => {
+                    if (c.start >= pivotPoint - 0.1) { // -0.1 tolerance
+                        return {
+                            ...c,
+                            start: c.start + delta,
+                            end: c.end + delta
+                        }
+                    }
+                    return c
+                }))
+
+                // Shift Components
+                setTimelineComponents(prev => prev.map(c => {
+                    if (c.id === id) {
+                        return { ...c, startTime, endTime }
+                    }
+                    if (c.startTime >= pivotPoint - 0.1) {
+                        return {
+                            ...c,
+                            startTime: c.startTime + delta,
+                            endTime: c.endTime + delta
+                        }
+                    }
+                    return c
+                }))
+
+                // Update total duration
+                setTimeout(() => {
+                    setVideoClips(current => {
+                        const maxEnd = Math.max(...current.map(c => c.end))
+                        setProjectDuration(maxEnd)
+                        return current
+                    })
+                }, 0)
+
+                return
+            }
+        }
+
         setTimelineComponents(timelineComponents.map(c =>
             c.id === id ? { ...c, startTime, endTime } : c
         ))

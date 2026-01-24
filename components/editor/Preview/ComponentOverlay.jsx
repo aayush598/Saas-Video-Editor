@@ -6,6 +6,7 @@ import { DeviceMockup } from '@/components/overlays/DeviceMockup'
 import { TextHighlight } from '@/components/overlays/TextHighlight'
 import { PremiumCursor } from '@/components/overlays/PremiumCursor'
 import { ProblemStatement } from '@/components/overlays/ProblemStatement'
+import { FreezeFrame } from '@/components/overlays/FreezeFrame'
 
 export function ComponentOverlay({ component, currentTime }) {
     const progress = (currentTime - component.startTime) / (component.endTime - component.startTime)
@@ -40,6 +41,10 @@ export function ComponentOverlay({ component, currentTime }) {
 
     if (component.type === 'problem-statement') {
         return <ProblemStatement component={component} currentTime={currentTime} />
+    }
+
+    if (component.type === 'freeze-frame') {
+        return <FreezeFrame component={component} currentTime={currentTime} />
     }
 
     return null

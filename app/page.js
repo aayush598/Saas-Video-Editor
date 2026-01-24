@@ -115,7 +115,27 @@ export default function App() {
 
       // Timeline
       {...timeline}
-      addComponentToTimeline={(id) => timeline.addComponentToTimeline(id, currentTime)}
+      addComponentToTimeline={(id) => {
+        if (id === 'freeze-frame' && videoRef.current) {
+          try {
+            const video = videoRef.current
+            const canvas = document.createElement('canvas')
+            canvas.width = video.videoWidth
+            canvas.height = video.videoHeight
+            const ctx = canvas.getContext('2d')
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.8)
+
+            timeline.addComponentToTimeline(id, currentTime, { imageSrc: dataUrl })
+          } catch (e) {
+            console.error("Failed to capture frame", e)
+            toast.error("Could not capture frame. Check console.")
+            timeline.addComponentToTimeline(id, currentTime)
+          }
+        } else {
+          timeline.addComponentToTimeline(id, currentTime)
+        }
+      }}
       handleSplit={() => timeline.handleSplit(currentTime)}
       handleClipMove={(id, newStart) => timeline.handleClipMove(id, newStart, timeline.projectDuration)}
       handleClipResize={(id, edge, newValue) => timeline.handleClipResize(id, edge, newValue, timeline.projectDuration)}
