@@ -7,9 +7,15 @@ import { TextHighlight } from '@/components/overlays/TextHighlight'
 import { PremiumCursor } from '@/components/overlays/PremiumCursor'
 import { ProblemStatement } from '@/components/overlays/ProblemStatement'
 import { FreezeFrame } from '@/components/overlays/FreezeFrame'
+import { AudioPlayer } from '@/components/overlays/AudioPlayer'
 
-export function ComponentOverlay({ component, currentTime }) {
+export function ComponentOverlay({ component, currentTime, isPlaying }) {
     const progress = (currentTime - component.startTime) / (component.endTime - component.startTime)
+
+    if (component.type === 'audio') {
+        return <AudioPlayer component={component} currentTime={currentTime} isPlaying={isPlaying} />
+    }
+
 
     if (component.type === 'floating-text') {
         return <FloatingText component={component} />

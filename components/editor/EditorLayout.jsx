@@ -92,6 +92,7 @@ export function EditorLayout({
                         currentTime={currentTime}
                         overlayRef={overlayRef}
                         videoClips={videoClips}
+                        isPlaying={isPlaying}
                     />
 
                     {videoUrl && (

@@ -12,7 +12,8 @@ export function VideoPreview({
     activeComponents,
     currentTime,
     overlayRef,
-    videoClips = []
+    videoClips = [],
+    isPlaying
 }) {
     const fileInputRef = useRef(null)
 
@@ -69,6 +70,7 @@ export function VideoPreview({
                                     key={component.id}
                                     component={component}
                                     currentTime={currentTime}
+                                    isPlaying={isPlaying}
                                 />
                             ))}
                         </AnimatePresence>
