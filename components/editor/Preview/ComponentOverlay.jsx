@@ -7,13 +7,17 @@ import { TextHighlight } from '@/components/overlays/TextHighlight'
 import { PremiumCursor } from '@/components/overlays/PremiumCursor'
 import { ProblemStatement } from '@/components/overlays/ProblemStatement'
 import { FreezeFrame } from '@/components/overlays/FreezeFrame'
-import { AudioPlayer } from '@/components/overlays/AudioPlayer'
+import { ZoomAreaOverlay } from '@/components/overlays/ZoomAreaOverlay'
 
 export function ComponentOverlay({ component, currentTime, isPlaying }) {
     const progress = (currentTime - component.startTime) / (component.endTime - component.startTime)
 
     if (component.type === 'audio') {
         return <AudioPlayer component={component} currentTime={currentTime} isPlaying={isPlaying} />
+    }
+
+    if (component.type === 'zoom-area') {
+        return <ZoomAreaOverlay component={component} isPlaying={isPlaying} />
     }
 
 

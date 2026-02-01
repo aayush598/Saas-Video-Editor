@@ -14,6 +14,7 @@ import { TextHighlightProperties } from './Properties/TextHighlightProperties'
 import { PremiumCursorProperties } from './Properties/PremiumCursorProperties'
 import { ProblemStatementProperties } from './Properties/ProblemStatementProperties'
 import { FreezeFrameProperties } from './Properties/FreezeFrameProperties'
+import { ZoomAreaProperties } from './Properties/ZoomAreaProperties'
 
 function PropertiesEditor({ component, onUpdate }) {
     if (!component) return null
@@ -21,6 +22,8 @@ function PropertiesEditor({ component, onUpdate }) {
     switch (component.type) {
         case 'audio':
             return <AudioProperties component={component} onUpdate={onUpdate} />
+        case 'zoom-area':
+            return <ZoomAreaProperties component={component} onUpdate={onUpdate} />
         case 'floating-text':
             return <FloatingTextProperties component={component} onUpdate={onUpdate} />
         case 'browser-frame':
