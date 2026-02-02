@@ -84,6 +84,30 @@ export default function App() {
     }
   }
 
+  const handleRecordingComplete = (file) => {
+    if (file) {
+      const url = URL.createObjectURL(file)
+      setVideoUrl(url)
+      setUploadedVideo(file)
+      toast.success('Screen recording captured!')
+
+      const video = document.createElement('video')
+      video.src = url
+      video.onloadedmetadata = () => {
+        const duration = Math.floor(video.duration * 10) / 10
+        timeline.setProjectDuration(duration)
+        timeline.setVideoClips([{
+          id: 'clip-screen-' + Date.now(),
+          sourceStart: 0,
+          sourceEnd: duration,
+          start: 0,
+          end: duration,
+          name: 'Screen Recording'
+        }])
+      }
+    }
+  }
+
   const togglePlayback = () => {
     setIsPlaying(!isPlaying)
   }
@@ -104,6 +128,7 @@ export default function App() {
       videoRef={videoRef}
       overlayRef={overlayRef}
       handleVideoUpload={handleVideoUpload}
+      handleRecordingComplete={handleRecordingComplete}
 
       // Playback
       isPlaying={isPlaying}

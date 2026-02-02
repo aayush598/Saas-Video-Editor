@@ -56,7 +56,8 @@ export function EditorLayout({
     // Derived
     // Derived
     activeComponents,
-    overlayRef
+    overlayRef,
+    handleRecordingComplete
 }) {
     return (
         <div className="h-screen w-full bg-background flex flex-col overflow-hidden">
@@ -75,6 +76,7 @@ export function EditorLayout({
                 skipForward={skipForward}
                 togglePlayback={togglePlayback}
                 isPlaying={isPlaying}
+                handleRecordingComplete={handleRecordingComplete}
             />
 
             <div className="flex-1 flex overflow-hidden">
