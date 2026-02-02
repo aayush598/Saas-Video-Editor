@@ -47,6 +47,23 @@ export function useScreenRecorder({ onRecordingComplete }) {
         mediaRecorderRef.current = mediaRecorder
         chunksRef.current = []
 
+        // Metadata capture
+        const events = []
+        const startTime = Date.now()
+
+        const clickHandler = (e) => {
+            events.push({
+                type: 'click',
+                x: (e.clientX / window.innerWidth) * 100,
+                y: (e.clientY / window.innerHeight) * 100,
+                time: (Date.now() - startTime) / 1000 // seconds
+            })
+        }
+
+        // Note: This only works for the current tab. 
+        // Capturing events from other tabs/windows is not possible via standard Web APIs.
+        window.addEventListener('click', clickHandler)
+
         mediaRecorder.ondataavailable = (e) => {
             if (e.data.size > 0) {
                 chunksRef.current.push(e.data)
@@ -57,12 +74,15 @@ export function useScreenRecorder({ onRecordingComplete }) {
             const blob = new Blob(chunksRef.current, { type: 'video/webm' })
             const file = new File([blob], "screen-recording.webm", { type: 'video/webm' })
 
+            // Cleanup events
+            window.removeEventListener('click', clickHandler)
+
             // Stop all tracks
             stream.getTracks().forEach(track => track.stop())
 
             setIsRecording(false)
             if (onRecordingComplete) {
-                onRecordingComplete(file)
+                onRecordingComplete(file, events)
             }
         }
 

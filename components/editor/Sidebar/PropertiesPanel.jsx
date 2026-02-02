@@ -15,6 +15,7 @@ import { PremiumCursorProperties } from './Properties/PremiumCursorProperties'
 import { ProblemStatementProperties } from './Properties/ProblemStatementProperties'
 import { FreezeFrameProperties } from './Properties/FreezeFrameProperties'
 import { ZoomAreaProperties } from './Properties/ZoomAreaProperties'
+import { RippleEffectProperties } from './Properties/RippleEffectProperties'
 
 function PropertiesEditor({ component, onUpdate }) {
     if (!component) return null
@@ -24,6 +25,8 @@ function PropertiesEditor({ component, onUpdate }) {
             return <AudioProperties component={component} onUpdate={onUpdate} />
         case 'zoom-area':
             return <ZoomAreaProperties component={component} onUpdate={onUpdate} />
+        case 'ripple-effect':
+            return <RippleEffectProperties component={component} onUpdate={onUpdate} />
         case 'floating-text':
             return <FloatingTextProperties component={component} onUpdate={onUpdate} />
         case 'browser-frame':

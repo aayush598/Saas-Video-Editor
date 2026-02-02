@@ -84,25 +84,28 @@ export default function App() {
     }
   }
 
-  const handleRecordingComplete = (file) => {
+  const handleRecordingComplete = (file, events = []) => {
     if (file) {
       const url = URL.createObjectURL(file)
       setVideoUrl(url)
       setUploadedVideo(file)
-      toast.success('Screen recording captured!')
+      toast.success(`Screen recording captured with ${events.length} clicks!`)
 
       const video = document.createElement('video')
       video.src = url
       video.onloadedmetadata = () => {
         const duration = Math.floor(video.duration * 10) / 10
         timeline.setProjectDuration(duration)
+
+        // Store events in the clip metadata
         timeline.setVideoClips([{
           id: 'clip-screen-' + Date.now(),
           sourceStart: 0,
           sourceEnd: duration,
           start: 0,
           end: duration,
-          name: 'Screen Recording'
+          name: 'Screen Recording',
+          events: events
         }])
       }
     }

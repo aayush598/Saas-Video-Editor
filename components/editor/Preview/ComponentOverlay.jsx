@@ -8,6 +8,7 @@ import { PremiumCursor } from '@/components/overlays/PremiumCursor'
 import { ProblemStatement } from '@/components/overlays/ProblemStatement'
 import { FreezeFrame } from '@/components/overlays/FreezeFrame'
 import { ZoomAreaOverlay } from '@/components/overlays/ZoomAreaOverlay'
+import { RippleEffect } from '@/components/overlays/RippleEffect'
 
 export function ComponentOverlay({ component, currentTime, isPlaying }) {
     const progress = (currentTime - component.startTime) / (component.endTime - component.startTime)
@@ -20,6 +21,9 @@ export function ComponentOverlay({ component, currentTime, isPlaying }) {
         return <ZoomAreaOverlay component={component} isPlaying={isPlaying} />
     }
 
+    if (component.type === 'ripple-effect') {
+        return <RippleEffect component={component} />
+    }
 
     if (component.type === 'floating-text') {
         return <FloatingText component={component} />

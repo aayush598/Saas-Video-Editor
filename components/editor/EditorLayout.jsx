@@ -95,6 +95,7 @@ export function EditorLayout({
                         overlayRef={overlayRef}
                         videoClips={videoClips}
                         isPlaying={isPlaying}
+                        addComponentToTimeline={addComponentToTimeline}
                     />
 
                     {videoUrl && (
