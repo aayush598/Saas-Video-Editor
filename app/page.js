@@ -7,6 +7,8 @@ import { useTimeline } from '@/hooks/useTimeline'
 import { usePlaybackEngine } from '@/hooks/usePlaybackEngine'
 import { useVideoSync } from '@/hooks/useVideoSync'
 import { useExport } from '@/hooks/useExport'
+import { useProjectPersistence } from '@/hooks/useProjectPersistence'
+import { useScreenRecorder } from '@/hooks/useScreenRecorder'
 
 export default function App() {
   // Video Source State
@@ -31,6 +33,25 @@ export default function App() {
     handleExportClick,
     handleExportConfirm
   } = useExport(videoUrl, exportFileName, videoRef, overlayRef, setCurrentTime)
+
+  // Recorder Logic
+  const recorder = useScreenRecorder({
+    onRecordingComplete: (file, events, cameraFile) => handleRecordingComplete(file, events, cameraFile)
+  })
+
+  // Persistence Hook
+  useProjectPersistence({
+    videoClips: timeline.videoClips,
+    timelineComponents: timeline.timelineComponents,
+    projectDuration: timeline.projectDuration,
+    setVideoClips: timeline.setVideoClips,
+    setTimelineComponents: timeline.setTimelineComponents,
+    setProjectDuration: timeline.setProjectDuration,
+    videoUrl,
+    setVideoUrl,
+    uploadedVideo,
+    setUploadedVideo
+  })
 
   // Derived State
   const activeComponents = timeline.timelineComponents.filter(
