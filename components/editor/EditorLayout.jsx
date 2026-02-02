@@ -53,11 +53,14 @@ export function EditorLayout({
     setExportFileName,
     handleExportConfirm,
 
-    // Derived
+    // Custom Library Props
+    customLibrary,
+
     // Derived
     activeComponents,
     overlayRef,
-    handleRecordingComplete
+    handleRecordingComplete,
+    recorder
 }) {
     return (
         <div className="h-screen w-full bg-background flex flex-col overflow-hidden">
@@ -76,12 +79,15 @@ export function EditorLayout({
                 skipForward={skipForward}
                 togglePlayback={togglePlayback}
                 isPlaying={isPlaying}
+                recorder={recorder}
                 handleRecordingComplete={handleRecordingComplete}
             />
 
             <div className="flex-1 flex overflow-hidden">
                 <ComponentLibrary
                     addComponentToTimeline={addComponentToTimeline}
+                    customTemplates={customLibrary?.customTemplates}
+                    customLibrary={customLibrary}
                 />
 
                 {/* Main Content Area */}

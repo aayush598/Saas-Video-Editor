@@ -71,9 +71,20 @@ export function useTimeline() {
         }
     }
 
-    const addComponentToTimeline = (componentType, currentTime, propsOverride = {}) => {
-        const component = COMPONENT_LIBRARY.find(c => c.id === componentType)
-        const defaultDuration = component.defaultProps.duration || 3
+    const addComponentToTimeline = (componentType, currentTime, propsOverride = {}, durationOverride = null) => {
+        let component;
+        if (typeof componentType === 'string') {
+            component = COMPONENT_LIBRARY.find(c => c.id === componentType)
+        } else {
+            component = componentType // It's a config object (custom template)
+        }
+
+        if (!component) {
+            toast.error("Component type not found")
+            return
+        }
+
+        const defaultDuration = durationOverride || component.defaultProps?.duration || 3
 
         let startTime = currentTime
 

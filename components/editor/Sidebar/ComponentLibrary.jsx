@@ -1,17 +1,22 @@
 import { useState } from 'react'
 import { Card } from '@/components/ui/card'
-import { Plus, Search } from 'lucide-react'
+import { Plus, Search, Code2 } from 'lucide-react'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Input } from '@/components/ui/input'
 import { COMPONENT_LIBRARY } from '@/lib/constants/componentLibrary'
+import { CustomComponentManager } from './CustomComponentManager'
 
-export function ComponentLibrary({ addComponentToTimeline }) {
+export function ComponentLibrary({ addComponentToTimeline, customTemplates = [], customLibrary }) {
     const [searchQuery, setSearchQuery] = useState('')
 
-    const filteredComponents = COMPONENT_LIBRARY.filter(component =>
+    // Merge static and custom libraries
+    const fullLibrary = [...COMPONENT_LIBRARY, ...customTemplates]
+
+    const filteredComponents = fullLibrary.filter(component =>
         component.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         component.description.toLowerCase().includes(searchQuery.toLowerCase())
     )
+
 
     return (
         <aside className="w-80 border-r bg-card flex flex-col">
@@ -34,16 +39,20 @@ export function ComponentLibrary({ addComponentToTimeline }) {
                 <div className="space-y-3">
                     {filteredComponents.length > 0 ? (
                         filteredComponents.map((component) => {
-                            const Icon = component.icon
+                            let Icon = component.icon
+                            if (!Icon && component.iconName === 'code') {
+                                Icon = Code2
+                            }
+
                             return (
                                 <Card
                                     key={component.id}
                                     className="p-4 cursor-pointer hover:border-primary transition-all hover:shadow-md"
-                                    onClick={() => addComponentToTimeline(component.id)}
+                                    onClick={() => addComponentToTimeline(component)}
                                 >
                                     <div className="flex items-start gap-3">
                                         <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                                            <Icon className="w-5 h-5 text-primary" />
+                                            {Icon ? <Icon className="w-5 h-5 text-primary" /> : <div className="w-5 h-5 bg-primary/20 rounded-full" />}
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <h3 className="font-semibold text-sm mb-1">{component.name}</h3>
@@ -61,6 +70,11 @@ export function ComponentLibrary({ addComponentToTimeline }) {
                     )}
                 </div>
             </ScrollArea>
+            {customLibrary && (
+                <div className="p-4 border-t bg-muted/20">
+                    <CustomComponentManager customLibrary={customLibrary} />
+                </div>
+            )}
         </aside>
     )
 }

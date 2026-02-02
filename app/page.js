@@ -9,6 +9,7 @@ import { useVideoSync } from '@/hooks/useVideoSync'
 import { useExport } from '@/hooks/useExport'
 import { useProjectPersistence } from '@/hooks/useProjectPersistence'
 import { useScreenRecorder } from '@/hooks/useScreenRecorder'
+import { useCustomComponentLibrary } from '@/hooks/useCustomComponentLibrary'
 
 export default function App() {
   // Video Source State
@@ -52,6 +53,9 @@ export default function App() {
     uploadedVideo,
     setUploadedVideo
   })
+
+  // Custom Component Library
+  const customLibrary = useCustomComponentLibrary()
 
   // Derived State
   const activeComponents = timeline.timelineComponents.filter(
@@ -153,6 +157,10 @@ export default function App() {
       overlayRef={overlayRef}
       handleVideoUpload={handleVideoUpload}
       handleRecordingComplete={handleRecordingComplete}
+      recorder={recorder}
+
+      // Custom Library
+      customLibrary={customLibrary}
 
       // Playback
       isPlaying={isPlaying}

@@ -1,6 +1,5 @@
 import { Button } from '@/components/ui/button'
 import { Scissors, SkipBack, Play, Pause, SkipForward, Circle, Square } from 'lucide-react'
-import { useScreenRecorder } from '@/hooks/useScreenRecorder'
 
 export function Toolbar({
     handleSplit,
@@ -9,7 +8,7 @@ export function Toolbar({
     skipForward,
     togglePlayback,
     isPlaying,
-    handleRecordingComplete
+    recorder
 }) {
     const {
         isRecording,
@@ -17,9 +16,7 @@ export function Toolbar({
         countdown,
         startRecording,
         stopRecording
-    } = useScreenRecorder({
-        onRecordingComplete: handleRecordingComplete
-    })
+    } = recorder || {}
 
     return (
         <div className="border-b bg-muted/40 px-4 py-2 flex items-center gap-2">

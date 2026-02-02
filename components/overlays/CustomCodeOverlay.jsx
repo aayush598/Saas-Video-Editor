@@ -5,7 +5,7 @@ import { AlertTriangle } from 'lucide-react'
 export function CustomCodeOverlay({ component }) {
     const containerRef = useRef(null)
     const styleRef = useRef(null)
-    const { html, css, position, x, y, width, height, scale, opacity } = component.props
+    const { html, css, position, x, y, width, height, scale, opacity } = component.props || {}
 
     // Unique ID for scoping CSS (partially)
     const uniqueId = `custom-component-${component.id}`
@@ -17,26 +17,10 @@ export function CustomCodeOverlay({ component }) {
             document.head.appendChild(styleRef.current)
         }
 
-        // Scope CSS to this component ID to prevent global pollution
-        // This is a basic scoping strategy: wrap user CSS with the container ID selector
-        // Note: This requires users to write CSS that matches the structure, 
-        // OR we can just inject it raw and let them handle it. 
-        // Better UX: Inject raw but advise on scoping.
-        // Even Better: auto-prefix selectors. implementing a full CSS parser is too much.
-        // We will just inject raw CSS for maximum power, but wrapped in a @layer or just simple injection.
-
-        // Let's try to prefix strictly: `#id selector`
-        // We'll leave it raw for flexibility but user needs to be careful.
-        // Actually, let's wrap it in a Shadow DOM? That would be safest style encapsulation.
-        // But Frame Motion is outside. 
-        // Let's stick to standard injection.
-
         styleRef.current.textContent = css
 
         return () => {
             if (styleRef.current) {
-                // Don't remove style immediately on unmount if we want to preserve animations during exit?
-                // Actually we should remove it to avoid clutter.
                 styleRef.current.remove()
                 styleRef.current = null
             }
@@ -46,25 +30,24 @@ export function CustomCodeOverlay({ component }) {
     // Position styles
     const getPositionStyles = () => {
         const styles = {
-            width: `${width}px`,
-            height: 'auto', // Allow auto height
-            opacity: opacity !== undefined ? opacity : 1,
-            transform: `scale(${scale || 1})`
+            width: width ? `${width}px` : 'auto',
+            height: 'auto',
+            // Opacity is handled by animate prop
         }
 
         switch (position) {
             case 'top-left':
-                return { ...styles, top: 40, left: 40 }
+                return { ...styles, top: '10%', left: '10%' }
             case 'top-right':
-                return { ...styles, top: 40, right: 40 }
+                return { ...styles, top: '10%', right: '10%' }
             case 'bottom-left':
-                return { ...styles, bottom: 40, left: 40 }
+                return { ...styles, bottom: '10%', left: '10%' }
             case 'bottom-right':
-                return { ...styles, bottom: 40, right: 40 }
+                return { ...styles, bottom: '10%', right: '10%' }
             case 'center':
-                return { ...styles, top: '50%', left: '50%', x: '-50%', y: '-50%' } // Motion handles x/y
+                return { ...styles, top: '50%', left: '50%', x: '-50%', y: '-50%' }
             case 'custom':
-                return { ...styles, top: `${y}%`, left: `${x}%`, x: '-50%', y: '-50%' }
+                return { ...styles, top: `${y || 50}%`, left: `${x || 50}%`, x: '-50%', y: '-50%' }
             default:
                 return { ...styles, top: '50%', left: '50%', x: '-50%', y: '-50%' }
         }
@@ -74,13 +57,20 @@ export function CustomCodeOverlay({ component }) {
     const initialStyles = getPositionStyles()
     const { x: motionX, y: motionY, ...cssStyles } = initialStyles
 
+    // Ensure numeric values and defaults
+    const safeScale = (scale !== undefined && scale !== null) ? Number(scale) : 1
+    const safeOpacity = (opacity !== undefined && opacity !== null) ? Number(opacity) : 1
+
+    // Safety check for width - if 0 or null, use auto
+    if (width === 0 || width === '0') cssStyles.width = 'auto'
+
     return (
         <motion.div
             id={uniqueId}
             initial={{ opacity: 0, scale: 0.8, x: motionX, y: motionY }}
-            animate={{ opacity: opacity, scale: scale, x: motionX, y: motionY }}
-            exit={{ opacity: 0, scale: 0.8, x: motionX, y: motionY }}
-            className={`absolute z-30 ${position === 'custom' ? '' : 'pointer-events-none'}`}
+            animate={{ opacity: safeOpacity, scale: safeScale, x: motionX, y: motionY }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            className="absolute z-30 pointer-events-auto"
             style={cssStyles}
         >
             <div
