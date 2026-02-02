@@ -9,6 +9,7 @@ import { ProblemStatement } from '@/components/overlays/ProblemStatement'
 import { FreezeFrame } from '@/components/overlays/FreezeFrame'
 import { ZoomAreaOverlay } from '@/components/overlays/ZoomAreaOverlay'
 import { RippleEffect } from '@/components/overlays/RippleEffect'
+import { CameraOverlay } from '@/components/overlays/CameraOverlay'
 
 export function ComponentOverlay({ component, currentTime, isPlaying }) {
     const progress = (currentTime - component.startTime) / (component.endTime - component.startTime)
@@ -59,6 +60,10 @@ export function ComponentOverlay({ component, currentTime, isPlaying }) {
 
     if (component.type === 'freeze-frame') {
         return <FreezeFrame component={component} currentTime={currentTime} />
+    }
+
+    if (component.type === 'camera-overlay') {
+        return <CameraOverlay component={component} currentTime={currentTime} isPlaying={isPlaying} />
     }
 
     return null

@@ -16,6 +16,7 @@ import { ProblemStatementProperties } from './Properties/ProblemStatementPropert
 import { FreezeFrameProperties } from './Properties/FreezeFrameProperties'
 import { ZoomAreaProperties } from './Properties/ZoomAreaProperties'
 import { RippleEffectProperties } from './Properties/RippleEffectProperties'
+import { CameraOverlayProperties } from './Properties/CameraOverlayProperties'
 
 function PropertiesEditor({ component, onUpdate }) {
     if (!component) return null
@@ -43,6 +44,8 @@ function PropertiesEditor({ component, onUpdate }) {
             return <ProblemStatementProperties component={component} onUpdate={onUpdate} />
         case 'freeze-frame':
             return <FreezeFrameProperties component={component} onUpdate={onUpdate} />
+        case 'camera-overlay':
+            return <CameraOverlayProperties component={component} onUpdate={onUpdate} />
         default:
             return <p className="text-sm text-muted-foreground">No properties available for this component type.</p>
     }
