@@ -18,6 +18,7 @@ import { ZoomAreaProperties } from './Properties/ZoomAreaProperties'
 import { RippleEffectProperties } from './Properties/RippleEffectProperties'
 import { CameraOverlayProperties } from './Properties/CameraOverlayProperties'
 import { VideoOverlayProperties } from './Properties/VideoOverlayProperties'
+import { CustomCodeProperties } from './Properties/CustomCodeProperties'
 
 function PropertiesEditor({ component, onUpdate }) {
     if (!component) return null
@@ -49,6 +50,8 @@ function PropertiesEditor({ component, onUpdate }) {
             return <CameraOverlayProperties component={component} onUpdate={onUpdate} />
         case 'video-overlay':
             return <VideoOverlayProperties component={component} onUpdate={onUpdate} />
+        case 'custom-code':
+            return <CustomCodeProperties component={component} onUpdate={onUpdate} />
         default:
             return <p className="text-sm text-muted-foreground">No properties available for this component type.</p>
     }

@@ -11,6 +11,7 @@ import { ZoomAreaOverlay } from '@/components/overlays/ZoomAreaOverlay'
 import { RippleEffect } from '@/components/overlays/RippleEffect'
 import { CameraOverlay } from '@/components/overlays/CameraOverlay'
 import { VideoOverlay } from '@/components/overlays/VideoOverlay'
+import { CustomCodeOverlay } from '@/components/overlays/CustomCodeOverlay'
 
 export function ComponentOverlay({ component, currentTime, isPlaying }) {
     const progress = (currentTime - component.startTime) / (component.endTime - component.startTime)
@@ -69,6 +70,10 @@ export function ComponentOverlay({ component, currentTime, isPlaying }) {
 
     if (component.type === 'video-overlay') {
         return <VideoOverlay component={component} currentTime={currentTime} isPlaying={isPlaying} />
+    }
+
+    if (component.type === 'custom-code') {
+        return <CustomCodeOverlay component={component} />
     }
 
     return null
