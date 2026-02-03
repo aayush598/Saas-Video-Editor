@@ -13,7 +13,7 @@ export function VideoClip({ clip, projectDuration, zoom, onMove, onResize, onDel
 
     const handleMouseDown = (e, type) => {
         e.stopPropagation()
-        onSelect()
+        onSelect(e.shiftKey || e.ctrlKey || e.metaKey)
 
         if (type === 'move') {
             setIsDragging(true)
@@ -64,13 +64,15 @@ export function VideoClip({ clip, projectDuration, zoom, onMove, onResize, onDel
     return (
         <div
             ref={clipRef}
-            className={`absolute h-full rounded-md overflow-hidden border-2 transition-all ${isSelected
-                ? 'border-blue-400 bg-blue-600 shadow-lg'
-                : 'border-blue-400/50 bg-blue-600/80 hover:bg-blue-600'
+            className={`absolute rounded-md overflow-hidden border-2 transition-all ${isSelected
+                ? 'border-yellow-400 ring-2 ring-yellow-400/50 bg-blue-600 shadow-xl z-20'
+                : 'border-blue-400/50 bg-blue-600/80 hover:bg-blue-600 z-10'
                 } ${isDragging || isResizing ? 'cursor-grabbing' : 'cursor-grab'}`}
             style={{
                 left: `${leftPercent}%`,
                 width: `${widthPercent}%`,
+                top: `${(clip.row || 0) * 45}px`,
+                height: '40px'
             }}
             onMouseDown={(e) => handleMouseDown(e, 'move')}
         >

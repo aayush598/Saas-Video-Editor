@@ -1,6 +1,6 @@
 import { Toaster } from '@/components/ui/sonner'
 import { Header } from './Header'
-import { Toolbar } from './Toolbar'
+
 import { ComponentLibrary } from './Sidebar/ComponentLibrary'
 import { PropertiesPanel } from './Sidebar/PropertiesPanel'
 import { VideoPreview } from './Preview/VideoPreview'
@@ -27,7 +27,8 @@ export function EditorLayout({
     videoClips,
     selectedComponent,
     setSelectedComponent,
-    selectedClip,
+    selectedClipIds,
+    selectedComponentIds,
     setSelectedClip,
     projectDuration,
     zoom,
@@ -70,18 +71,10 @@ export function EditorLayout({
                 handleExportClick={handleExportClick}
                 isExporting={isExporting}
                 videoUrl={videoUrl}
+                recorder={recorder}
             />
 
-            <Toolbar
-                handleSplit={handleSplit}
-                uploadedVideo={uploadedVideo}
-                skipBackward={skipBackward}
-                skipForward={skipForward}
-                togglePlayback={togglePlayback}
-                isPlaying={isPlaying}
-                recorder={recorder}
-                handleRecordingComplete={handleRecordingComplete}
-            />
+
 
             <div className="flex-1 flex overflow-hidden">
                 <ComponentLibrary
@@ -102,9 +95,12 @@ export function EditorLayout({
                         videoClips={videoClips}
                         isPlaying={isPlaying}
                         addComponentToTimeline={addComponentToTimeline}
+                        togglePlayback={togglePlayback}
+                        skipBackward={skipBackward}
+                        skipForward={skipForward}
                     />
 
-                    {videoUrl && (
+                    {videoUrl && videoClips.length > 0 && (
                         <Timeline
                             videoClips={videoClips}
                             timelineComponents={timelineComponents}
@@ -116,21 +112,24 @@ export function EditorLayout({
                             handleClipMove={handleClipMove}
                             handleClipResize={handleClipResize}
                             deleteClip={deleteClip}
-                            selectedClip={selectedClip}
+                            selectedClipIds={selectedClipIds}
                             setSelectedClip={setSelectedClip}
                             selectedComponent={selectedComponent}
+                            selectedComponentIds={selectedComponentIds}
                             setSelectedComponent={setSelectedComponent}
                             removeComponent={removeComponent}
                             copyItem={copyItem}
                             pasteItem={pasteItem}
                             clipboard={clipboard}
+                            handleSplit={handleSplit}
+                            updateComponentTiming={updateComponentTiming}
                         />
                     )}
                 </div>
 
                 <PropertiesPanel
                     selectedComponent={selectedComponent}
-                    selectedClip={selectedClip}
+                    selectedClip={selectedClipIds?.[0]}
                     removeComponent={removeComponent}
                     updateComponentProps={updateComponentProps}
                     updateComponentTiming={updateComponentTiming}

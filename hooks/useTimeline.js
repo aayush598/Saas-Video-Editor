@@ -5,69 +5,96 @@ import { COMPONENT_LIBRARY } from '@/lib/constants/componentLibrary'
 export function useTimeline() {
     const [timelineComponents, setTimelineComponents] = useState([])
     const [videoClips, setVideoClips] = useState([])
-    const [selectedComponentId, setSelectedComponentId] = useState(null)
-    const [selectedClip, setSelectedClip] = useState(null)
+    const [selectedComponentIds, setSelectedComponentIds] = useState([])
+    const [selectedClipIds, setSelectedClipIds] = useState([])
     const [clipboard, setClipboard] = useState(null)
-    const [projectDuration, setProjectDuration] = useState(30)
+    const [projectDuration, setProjectDuration] = useState(10)
     const [zoom, setZoom] = useState(1)
 
-    // Derived selected component to ensure it's always fresh
-    const selectedComponent = timelineComponents.find(c => c.id === selectedComponentId) || null
+    const calculateTotalDuration = (clips, components) => {
+        const clipsEnd = Math.max(0, ...clips.map(c => c.end))
+        const componentsEnd = Math.max(0, ...components.map(c => c.endTime))
+        return Math.max(clipsEnd, componentsEnd)
+    }
+
+    // Derived selected components
+    const selectedComponent = timelineComponents.find(c => selectedComponentIds.includes(c.id)) || null
 
     // Helper to maintain interface
-    const setSelectedComponent = (input) => {
+    const toggleComponentSelection = (input, isMulti) => {
         if (!input) {
-            setSelectedComponentId(null)
+            setSelectedComponentIds([])
             return
         }
-        // Support both ID string and Component object
         const id = typeof input === 'string' ? input : input.id
-        setSelectedComponentId(id)
+
+        if (isMulti) {
+            setSelectedComponentIds(prev =>
+                prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+            )
+        } else {
+            setSelectedComponentIds([id])
+        }
+        // Clear clip selection when selecting component
+        if (!isMulti) setSelectedClipIds([])
+    }
+
+    const toggleClipSelection = (id, isMulti) => {
+        if (isMulti) {
+            setSelectedClipIds(prev =>
+                prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+            )
+        } else {
+            setSelectedClipIds([id])
+        }
+        // Clear component selection when selecting clip
+        if (!isMulti) setSelectedComponentIds([])
     }
 
     const copyItem = () => {
-        if (selectedComponent) {
-            setClipboard({ type: 'component', data: selectedComponent })
-            toast.success('Component copied')
-        } else if (selectedClip) {
-            const clip = videoClips.find(c => c.id === selectedClip)
-            if (clip) {
-                setClipboard({ type: 'clip', data: clip })
-                toast.success('Clip copied')
-            }
+        if (selectedComponentIds.length > 0) {
+            const comps = timelineComponents.filter(c => selectedComponentIds.includes(c.id))
+            setClipboard({ type: 'components', data: comps })
+            toast.success(`${comps.length} Component(s) copied`)
+        } else if (selectedClipIds.length > 0) {
+            const clips = videoClips.filter(c => selectedClipIds.includes(c.id))
+            setClipboard({ type: 'clips', data: clips })
+            toast.success(`${clips.length} Clip(s) copied`)
         }
     }
 
     const pasteItem = (currentTime) => {
         if (!clipboard) return
 
-        if (clipboard.type === 'component') {
-            const newComponent = {
-                ...clipboard.data,
-                id: `${clipboard.data.type}-${Date.now()}`,
+        if (clipboard.type === 'components') {
+            const newComponents = clipboard.data.map((item, index) => ({
+                ...item,
+                id: `${item.type}-${Date.now()}-${index}`,
                 startTime: currentTime,
-                endTime: Math.min(currentTime + (clipboard.data.endTime - clipboard.data.startTime), projectDuration)
-            }
-            setTimelineComponents([...timelineComponents, newComponent])
-            setSelectedComponentId(newComponent.id)
-            toast.success('Component pasted')
-        } else if (clipboard.type === 'clip') {
-            const duration = clipboard.data.end - clipboard.data.start
-            const newClip = {
-                ...clipboard.data,
-                id: `clip-${Date.now()}`,
-                start: currentTime,
-                end: currentTime + duration,
-                name: `${clipboard.data.name} (Copy)`
-            }
-            setVideoClips([...videoClips, newClip].sort((a, b) => a.start - b.start))
+                endTime: Math.min(currentTime + (item.endTime - item.startTime), projectDuration)
+            }))
+
+            setTimelineComponents([...timelineComponents, ...newComponents])
+            setSelectedComponentIds(newComponents.map(c => c.id))
+            toast.success('Components pasted')
+        } else if (clipboard.type === 'clips') {
+            const newClips = clipboard.data.map((item, index) => {
+                const duration = item.end - item.start
+                return {
+                    ...item,
+                    id: `clip-${Date.now()}-${index}`,
+                    start: currentTime,
+                    end: currentTime + duration,
+                    name: `${item.name} (Copy)`
+                }
+            })
+            setVideoClips([...videoClips, ...newClips].sort((a, b) => a.start - b.start))
 
             // Extend project duration if needed
-            const maxEnd = Math.max(...[...videoClips, newClip].map(c => c.end))
-            setProjectDuration(maxEnd)
+            setProjectDuration(calculateTotalDuration([...videoClips, ...newClips], timelineComponents))
 
-            setSelectedClip(newClip.id)
-            toast.success('Clip pasted')
+            setSelectedClipIds(newClips.map(c => c.id))
+            toast.success('Clips pasted')
         }
     }
 
@@ -178,19 +205,25 @@ export function useTimeline() {
             props: finalProps
         }
         setTimelineComponents(prev => [...prev, newComponent])
-        setSelectedComponentId(newComponent.id)
+        setTimelineComponents(prev => [...prev, newComponent])
+        setSelectedComponentIds([newComponent.id])
         toast.success(`${component.name} added to timeline`)
     }
 
+
     const removeComponent = (id) => {
-        // If removing a freeze frame, we should probably close the gap?
-        // For now, simpler to just remove the overlay, but gaps remain.
-        // Advanced users can move clips to close gaps.
-        setTimelineComponents(timelineComponents.filter(c => c.id !== id))
-        if (selectedComponentId === id) {
-            setSelectedComponentId(null)
+        let idsToRemove = [id]
+        // If the ID passed is part of selection, remove all selected
+        if (selectedComponentIds.includes(id)) {
+            idsToRemove = selectedComponentIds
         }
-        toast.info('Component removed')
+
+        const newComponents = timelineComponents.filter(c => !idsToRemove.includes(c.id))
+        setTimelineComponents(newComponents)
+        setProjectDuration(calculateTotalDuration(videoClips, newComponents))
+
+        setSelectedComponentIds([])
+        toast.info('Components removed')
     }
 
     const updateComponentProps = (id, newProps) => {
@@ -252,9 +285,15 @@ export function useTimeline() {
             }
         }
 
-        setTimelineComponents(timelineComponents.map(c =>
+        const newComponents = timelineComponents.map(c =>
             c.id === id ? { ...c, startTime, endTime } : c
-        ))
+        )
+        setTimelineComponents(newComponents)
+
+        // Recalculate duration
+        const clipsEnd = Math.max(0, ...videoClips.map(c => c.end))
+        const componentsEnd = Math.max(0, ...newComponents.map(c => c.endTime))
+        setProjectDuration(Math.max(clipsEnd, componentsEnd))
     }
 
     const handleSplit = (currentTime) => {
@@ -273,7 +312,7 @@ export function useTimeline() {
             id: `clip-${Date.now()}-1`,
             end: splitPoint,
             sourceEnd: sourceSplit,
-            name: clipAtPlayhead.name + ' (1)'
+            name: clipAtPlayhead.name
         }
 
         const clipRight = {
@@ -281,7 +320,7 @@ export function useTimeline() {
             id: `clip-${Date.now()}-2`,
             start: splitPoint,
             sourceStart: sourceSplit,
-            name: clipAtPlayhead.name + ' (2)'
+            name: clipAtPlayhead.name
         }
 
         const newClips = videoClips.flatMap(c =>
@@ -291,7 +330,7 @@ export function useTimeline() {
         toast.success("Video split at playhead!")
     }
 
-    const handleClipMove = (id, newStart, videoDuration) => {
+    const handleClipMove = (id, newStart) => {
         setVideoClips(prev => {
             const clip = prev.find(c => c.id === id)
             if (!clip) return prev
@@ -303,14 +342,13 @@ export function useTimeline() {
                 c.id === id ? { ...c, start: newStart, end: newEnd } : c
             ).sort((a, b) => a.start - b.start)
 
-            const maxEnd = Math.max(...updated.map(c => c.end), videoDuration)
-            setProjectDuration(maxEnd)
+            setProjectDuration(calculateTotalDuration(updated, timelineComponents))
 
             return updated
         })
     }
 
-    const handleClipResize = (id, edge, newValue, videoDuration) => {
+    const handleClipResize = (id, edge, newValue) => {
         setVideoClips(prev => {
             const clip = prev.find(c => c.id === id)
             if (!clip) return prev
@@ -339,8 +377,7 @@ export function useTimeline() {
             }
 
             const newClips = prev.map(c => c.id === id ? updated : c)
-            const maxEnd = Math.max(...newClips.map(c => c.end), videoDuration)
-            setProjectDuration(maxEnd)
+            setProjectDuration(calculateTotalDuration(newClips, timelineComponents))
 
             return newClips
         })
@@ -348,20 +385,18 @@ export function useTimeline() {
 
     const deleteClip = (id) => {
         setVideoClips(prev => {
-            const newClips = prev.filter(c => c.id !== id)
-            if (newClips.length === 0) {
-                toast.error("Cannot delete the last clip")
-                return prev
+            let idsToRemove = [id]
+            if (selectedClipIds.includes(id)) {
+                idsToRemove = selectedClipIds
             }
 
-            const maxEnd = Math.max(...newClips.map(c => c.end))
-            setProjectDuration(maxEnd)
-            toast.success("Clip deleted")
+            const newClips = prev.filter(c => !idsToRemove.includes(c.id))
+
+            setProjectDuration(calculateTotalDuration(newClips, timelineComponents))
+            toast.success("Clips deleted")
             return newClips
         })
-        if (selectedClip === id) {
-            setSelectedClip(null)
-        }
+        setSelectedClipIds([])
     }
 
     return {
@@ -370,9 +405,11 @@ export function useTimeline() {
         videoClips,
         setVideoClips,
         selectedComponent,
-        setSelectedComponent,
-        selectedClip,
-        setSelectedClip,
+        selectedComponent,
+        setSelectedComponent: toggleComponentSelection,
+        selectedClipIds, // Renamed
+        setSelectedClip: toggleClipSelection,
+        selectedComponentIds, // Added for timeline usage
         projectDuration,
         setProjectDuration,
         zoom,
