@@ -202,13 +202,33 @@ export function useTimeline() {
             }
         }
 
+        // Handle Custom Templates (objects)
+        let finalType = typeof componentType === 'string' ? componentType : (component.type || 'custom-code')
+        let finalProps = { ...component.defaultProps, ...propsOverride }
+
+        // If this is a custom template from the library (object with html/css)
+        if (typeof componentType !== 'string' && (component.html || component.css)) {
+            finalType = 'custom-code'
+            finalProps = {
+                ...finalProps,
+                html: component.html,
+                css: component.css,
+                // Set defaults if not present
+                position: finalProps.position || 'center',
+                scale: finalProps.scale || 1,
+                opacity: finalProps.opacity || 1,
+                width: finalProps.width || 'auto',
+                height: finalProps.height || 'auto'
+            }
+        }
+
         const newComponent = {
-            id: `${componentType}-${Date.now()}`,
-            type: componentType,
+            id: `${finalType}-${Date.now()}`,
+            type: finalType,
             name: component.name,
             startTime: startTime,
             endTime: startTime + defaultDuration,
-            props: { ...component.defaultProps, ...propsOverride }
+            props: finalProps
         }
         setTimelineComponents(prev => [...prev, newComponent])
         setSelectedComponentId(newComponent.id)

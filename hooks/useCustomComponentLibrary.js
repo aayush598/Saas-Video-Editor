@@ -51,6 +51,33 @@ export function useCustomComponentLibrary() {
         }
     }
 
+    const updateTemplate = async (id, meta) => {
+        const existing = customTemplates.find(t => t.id === id)
+        if (!existing) return null
+
+        const updatedTemplate = {
+            ...existing,
+            name: meta.name || existing.name,
+            description: meta.description || existing.description,
+            defaultProps: {
+                ...existing.defaultProps,
+                html: meta.html ?? existing.defaultProps.html,
+                css: meta.css ?? existing.defaultProps.css,
+            }
+        }
+
+        try {
+            await saveTemplate(updatedTemplate)
+            setCustomTemplates(prev => prev.map(t => t.id === id ? updatedTemplate : t))
+            toast.success("Component updated")
+            return updatedTemplate
+        } catch (e) {
+            console.error("Failed to update template", e)
+            toast.error("Failed to update component")
+            return null
+        }
+    }
+
     const removeTemplate = async (id) => {
         try {
             await deleteTemplate(id)
@@ -109,6 +136,7 @@ export function useCustomComponentLibrary() {
         removeTemplate,
         exportTemplate,
         importTemplate,
+        updateTemplate,
         isLoading
     }
 }

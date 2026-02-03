@@ -30,7 +30,7 @@ export function CustomCodeOverlay({ component }) {
     // Position styles
     const getPositionStyles = () => {
         const styles = {
-            width: width ? `${width}px` : 'auto',
+            width: (width && width !== 'auto') ? `${width}px` : 'auto',
             height: 'auto',
             // Opacity is handled by animate prop
         }

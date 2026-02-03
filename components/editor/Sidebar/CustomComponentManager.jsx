@@ -5,19 +5,44 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Trash2, Download, Upload, Plus, Code2 } from 'lucide-react'
+import { Trash2, Download, Upload, Plus, Code2, Pencil } from 'lucide-react'
 
 export function CustomComponentManager({ customLibrary }) {
-    const { customTemplates, createTemplate, removeTemplate, exportTemplate, importTemplate } = customLibrary
+    const { customTemplates, createTemplate, removeTemplate, exportTemplate, importTemplate, updateTemplate } = customLibrary
     const [isOpen, setIsOpen] = useState(false)
     const [mode, setMode] = useState('list') // 'list', 'create'
+    const [editingId, setEditingId] = useState(null)
     const [newComponent, setNewComponent] = useState({ name: '', description: '', html: '', css: '' })
     const fileInputRef = useRef(null)
 
-    const handleCreate = async () => {
+    const handleSave = async () => {
         if (!newComponent.name) return
-        await createTemplate(newComponent)
+
+        if (editingId) {
+            await updateTemplate(editingId, newComponent)
+        } else {
+            await createTemplate(newComponent)
+        }
+
         setMode('list')
+        setEditingId(null)
+        setNewComponent({ name: '', description: '', html: '', css: '' })
+    }
+
+    const handleEdit = (template) => {
+        setNewComponent({
+            name: template.name,
+            description: template.description || '',
+            html: template.defaultProps?.html || '',
+            css: template.defaultProps?.css || ''
+        })
+        setEditingId(template.id)
+        setMode('create') // We re-use the create mode view which is really an editor view
+    }
+
+    const handleCancel = () => {
+        setMode('list')
+        setEditingId(null)
         setNewComponent({ name: '', description: '', html: '', css: '' })
     }
 
@@ -49,7 +74,7 @@ export function CustomComponentManager({ customLibrary }) {
                         <>
                             <div className="flex gap-2 mb-4 justify-between">
                                 <div className="flex gap-2">
-                                    <Button onClick={() => setMode('create')} className="gap-2">
+                                    <Button onClick={() => { setEditingId(null); setMode('create'); }} className="gap-2">
                                         <Plus className="w-4 h-4" /> Create New
                                     </Button>
                                     <Button variant="outline" onClick={() => fileInputRef.current?.click()} className="gap-2">
@@ -82,6 +107,15 @@ export function CustomComponentManager({ customLibrary }) {
                                                     <p className="text-xs text-muted-foreground line-clamp-2 mt-1">{template.description}</p>
                                                 </div>
                                                 <div className="flex justify-end gap-1 mt-3">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-7 w-7"
+                                                        onClick={() => handleEdit(template)}
+                                                        title="Edit"
+                                                    >
+                                                        <Pencil className="w-3.5 h-3.5" />
+                                                    </Button>
                                                     <Button
                                                         variant="ghost"
                                                         size="icon"
@@ -174,8 +208,8 @@ export function CustomComponentManager({ customLibrary }) {
                 <DialogFooter className="mt-4">
                     {mode === 'create' && (
                         <>
-                            <Button variant="outline" onClick={() => setMode('list')}>Cancel</Button>
-                            <Button onClick={handleCreate}>Save Component</Button>
+                            <Button variant="outline" onClick={handleCancel}>Cancel</Button>
+                            <Button onClick={handleSave}>{editingId ? 'Update Component' : 'Save Component'}</Button>
                         </>
                     )}
                 </DialogFooter>
