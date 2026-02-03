@@ -88,60 +88,7 @@ export function useTimeline() {
 
         let startTime = currentTime
 
-        // Special handling for Ripple Effect with Clip Metadata
-        if (componentType === 'ripple-effect') {
-            // Check if there is a clip at the current time that has metadata
-            const clipAtPlayhead = videoClips.find(c => currentTime >= c.start && currentTime <= c.end)
 
-            if (clipAtPlayhead && clipAtPlayhead.events && clipAtPlayhead.events.length > 0) {
-                const clickEvents = clipAtPlayhead.events.filter(e => e.type === 'click')
-
-                if (clickEvents.length > 0) {
-                    // Add a ripple for EACH click event found in the metadata
-                    // We adjust the time based on the clip's current position and offset
-
-                    const newComponents = clickEvents.map((evt, index) => {
-                        // Calculate absolute timeline time for this event
-                        // Event time is relative to source start (0)
-                        // We need to map it to timeline time:
-                        // clip.start + (eventTime - clip.sourceStart)  <-- assuming eventTime is 0-based from recording start
-
-                        // Note: events stored as seconds from recording start.
-                        // Clip sourceStart moves if we trim.
-                        // But if we just recorded, sourceStart is 0.
-                        // If we trimmed the left side, we need to check if the event is within the visible range.
-
-                        const eventTimeInSource = evt.time
-
-                        if (eventTimeInSource >= clipAtPlayhead.sourceStart && eventTimeInSource <= clipAtPlayhead.sourceEnd) {
-                            const relativeTime = eventTimeInSource - clipAtPlayhead.sourceStart
-                            const timelineTime = clipAtPlayhead.start + relativeTime
-
-                            return {
-                                id: `ripple-${Date.now()}-${index}`,
-                                type: 'ripple-effect',
-                                name: 'Click Ripple',
-                                startTime: timelineTime,
-                                endTime: timelineTime + 0.6, // Short duration for burst
-                                props: {
-                                    ...component.defaultProps,
-                                    x: evt.x,
-                                    y: evt.y,
-                                    duration: 0.6
-                                }
-                            }
-                        }
-                        return null
-                    }).filter(Boolean)
-
-                    if (newComponents.length > 0) {
-                        setTimelineComponents(prev => [...prev, ...newComponents])
-                        toast.success(`Auto-generated ${newComponents.length} ripple effects from recording!`)
-                        return // Exit, don't add the default single ripple
-                    }
-                }
-            }
-        }
 
         // ... existing logic for freeze-frame ...
         // If it's a freeze frame, we need to split the video and make a gap

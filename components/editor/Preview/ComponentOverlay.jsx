@@ -8,7 +8,6 @@ import { PremiumCursor } from '@/components/overlays/PremiumCursor'
 import { ProblemStatement } from '@/components/overlays/ProblemStatement'
 import { FreezeFrame } from '@/components/overlays/FreezeFrame'
 import { ZoomAreaOverlay } from '@/components/overlays/ZoomAreaOverlay'
-import { RippleEffect } from '@/components/overlays/RippleEffect'
 import { CameraOverlay } from '@/components/overlays/CameraOverlay'
 import { VideoOverlay } from '@/components/overlays/VideoOverlay'
 import { CustomCodeOverlay } from '@/components/overlays/CustomCodeOverlay'
@@ -24,9 +23,7 @@ export function ComponentOverlay({ component, currentTime, isPlaying }) {
         return <ZoomAreaOverlay component={component} isPlaying={isPlaying} />
     }
 
-    if (component.type === 'ripple-effect') {
-        return <RippleEffect component={component} />
-    }
+
 
     if (component.type === 'floating-text') {
         return <FloatingText component={component} />

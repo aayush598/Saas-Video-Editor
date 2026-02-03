@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Upload, MousePointerClick } from 'lucide-react'
+import { Upload } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { ComponentOverlay } from './ComponentOverlay'
 
@@ -17,7 +17,6 @@ export function VideoPreview({
     addComponentToTimeline
 }) {
     const fileInputRef = useRef(null)
-    const [isAddMode, setIsAddMode] = useState(false)
 
     // Check if current time is within any active video clip
     const isVideoVisible = videoClips.some(clip =>
@@ -59,41 +58,12 @@ export function VideoPreview({
         originY = y
     }
 
-    const handlePreviewClick = (e) => {
-        if (isAddMode && addComponentToTimeline) {
-            const rect = e.currentTarget.getBoundingClientRect()
-            const x = ((e.clientX - rect.left) / rect.width) * 100
-            const y = ((e.clientY - rect.top) / rect.height) * 100
 
-            addComponentToTimeline('ripple-effect', currentTime, {
-                x,
-                y,
-                size: 30, // Default size
-                color: '#3b82f6',
-                duration: 0.6
-            })
-            // Optional: Turn off add mode after one click? 
-            // setIsAddMode(false) 
-        }
-    }
 
     return (
         <div className="flex-1 bg-muted/30 flex items-center justify-center p-4 min-h-0 flex-col gap-2">
             {/* Quick Actions Bar */}
-            {videoUrl && (
-                <div className="w-full flex justify-end px-2">
-                    <Button
-                        variant={isAddMode ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setIsAddMode(!isAddMode)}
-                        className="gap-2"
-                        title="Click on video to add ripple effect"
-                    >
-                        <MousePointerClick className="w-4 h-4" />
-                        {isAddMode ? "Click Video to Add Ripple" : "Add Click Ripple"}
-                    </Button>
-                </div>
-            )}
+
 
             {!videoUrl ? (
                 <Card className="p-12 text-center max-w-md">
@@ -123,18 +93,17 @@ export function VideoPreview({
             ) : (
                 <div className="relative w-auto h-auto max-w-full max-h-full aspect-video bg-black rounded-lg overflow-hidden shadow-2xl">
                     <motion.div
-                        className={`w-full h-full relative ${isAddMode ? 'cursor-crosshair' : ''}`}
+                        className="w-full h-full relative"
                         animate={{
                             scale: scale,
                             transformOrigin: `${originX}% ${originY}%`
                         }}
                         transition={{ duration: 0 }}
-                        onClick={handlePreviewClick}
                     >
                         <video
                             ref={videoRef}
                             src={videoUrl}
-                            className={`w-full h-full object-contain transition-opacity duration-150 ${isAddMode ? 'pointer-events-none' : ''}`}
+                            className="w-full h-full object-contain transition-opacity duration-150"
                             style={{
                                 opacity: isVideoVisible ? 1 : 0,
                                 visibility: isVideoVisible ? 'visible' : 'hidden'
